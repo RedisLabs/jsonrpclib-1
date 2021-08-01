@@ -112,72 +112,27 @@ _logger = logging.getLogger(__name__)
 # ------------------------------------------------------------------------------
 # JSON library import
 
-try:
-    # pylint: disable=F0401,E0611
-    # Using cjson
-    import cjson  # type: ignore
+# pylint: disable=F0401,E0611
+import ujson as json
 
-    _logger.debug("Using cjson as JSON library")
-
-    # Declare cjson methods
-    def jdumps(obj, encoding="utf-8"):  # pylint: disable=unused-argument
-        """
-        Serializes ``obj`` to a JSON formatted string, using cjson.
-        """
-        return cjson.encode(obj)
-
-    def jloads(json_string):
-        """
-        Deserializes ``json_string`` (a string containing a JSON document)
-        to a Python object, using cjson.
-        """
-        return cjson.decode(json_string)
+_logger.debug("Using ujson as JSON library")
 
 
-except ImportError:
-    # pylint: disable=F0401,E0611
-    # Use json or simplejson
-    try:
-        import json
+# Declare json methods
+def jdumps(obj, encoding="utf-8"):  # pylint: disable=unused-argument
+    """
+    Serializes ``obj`` to a JSON formatted string.
+    """
+    # ujson doesn't support the encoding parameter
+    return json.dumps(obj)
 
-        _logger.debug("Using json as JSON library")
-    except ImportError:
-        try:
-            import simplejson as json  # type: ignore
 
-            _logger.debug("Using simplejson as JSON library")
-        except ImportError:
-            _logger.error("No supported JSON library found")
-            raise ImportError(
-                "You must have the cjson, json, or simplejson "
-                "module(s) available."
-            )
-
-    # Declare json methods
-    if sys.version_info[0] < 3:
-
-        def jdumps(obj, encoding="utf-8"):
-            """
-            Serializes ``obj`` to a JSON formatted string.
-            """
-            # Python 2 (explicit encoding)
-            return json.dumps(obj, encoding=encoding)
-
-    else:
-        # Python 3
-        def jdumps(obj, encoding="utf-8"):  # pylint: disable=unused-argument
-            """
-            Serializes ``obj`` to a JSON formatted string.
-            """
-            # Python 3 (the encoding parameter has been removed)
-            return json.dumps(obj)
-
-    def jloads(json_string):
-        """
-        Deserializes ``json_string`` (a string containing a JSON document)
-        to a Python object.
-        """
-        return json.loads(json_string)
+def jloads(json_string):
+    """
+    Deserializes ``json_string`` (a string containing a JSON document)
+    to a Python object.
+    """
+    return json.loads(json_string)
 
 
 # ------------------------------------------------------------------------------
