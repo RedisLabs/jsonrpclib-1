@@ -333,6 +333,11 @@ class TransportMixIn(object):
         self.accept_gzip_encoding = True
         self.verbose = False
 
+        self.timeout = None
+
+    def set_timeout(self, timeout):
+        self.timeout = timeout
+
     def push_headers(self, headers):
         """
         Adds a dictionary of headers to the additional headers list
@@ -409,7 +414,7 @@ class TransportMixIn(object):
         """
         connection = self.make_connection(host)
         try:
-            self.send_request(connection, handler, request_body, verbose)
+            self.send_request(connection, handler, request_body, verbose, self.timeout)
             self.send_content(connection, request_body)
 
             response = connection.getresponse()
@@ -429,7 +434,7 @@ class TransportMixIn(object):
             host + handler, response.status, response.reason, response.msg
         )
 
-    def send_request(self, connection, handler, request_body, debug=0):
+    def send_request(self, connection, handler, request_body, debug=0, timeout=None):
         """
         Send HTTP request.
 
@@ -439,8 +444,11 @@ class TransportMixIn(object):
         :param handler: Target RPC handler (a path relative to host)
         :param request_body: The JSON-RPC request body
         :param debug: Enable debugging if debug is true.
+        :param timeout: The request timeout.
         :return: An HTTPConnection.
         """
+        if timeout is not None:
+            connection.timeout = timeout
         if debug:
             connection.set_debuglevel(1)
         if self.accept_gzip_encoding and gzip:
@@ -607,6 +615,7 @@ class ServerProxy(XMLServerProxy):
         history=None,
         config=jsonrpclib.config.DEFAULT,
         context=None,
+        timeout=None,
     ):
         """
         Sets up the server proxy
@@ -674,6 +683,7 @@ class ServerProxy(XMLServerProxy):
 
         # Global custom headers are injected into Transport
         self.__transport.push_headers(headers or {})
+        self.__transport.set_timeout(timeout)
 
     def _request(self, methodname, params, rpcid=None):
         """
